@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Podcast 生成器</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎙️</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="pdf.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="container mx-auto p-6">
+        <div class="flex justify-center">
+            <div class="w-full max-w-4xl">
+                <!-- Header -->
+                <div class="text-center mb-8">
+                    <h1 class="text-4xl font-bold text-gray-800 mb-2">🎙️ Podcast 生成器</h1>
+                    <p class="text-gray-600">使用 AI 快速生成專業講稿與高品質語音</p>
+                </div>
+                <!-- API Key Input -->
+                <div class="bg-white shadow-lg rounded-xl p-6 mb-6">
+                    <label for="apiKey" class="block text-gray-700 text-sm font-bold mb-3">
+                        🔑 Gemini API 金鑰
+                    </label>
+                    <input type="password" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
+                           id="apiKey" 
+                           placeholder="請輸入您的 Gemini API 金鑰">
+                </div>
+
+                <!-- Main Form -->
+                <div class="bg-white shadow-lg rounded-xl p-8 mb-6">
+                    <!-- Material Input -->
+                    <div class="mb-6">
+                        <label for="material" class="block text-gray-700 text-sm font-bold mb-3">
+                            📝 素材內容
+                        </label>
+                        <textarea class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 h-32 resize-none" 
+                                  id="material" 
+                                  rows="5" 
+                                  placeholder="請輸入您的講稿素材..."></textarea>
+                        
+                        <!-- Tavily Search Buttons -->
+                        <div class="flex space-x-3 mt-3">
+                            <button type="button" class="btn-info px-3 py-1 text-gray-600 text-xs border border-gray-300 rounded-lg hover:bg-gray-50" id="googleBtn">
+                                🔎 Google
+                            </button>
+                            <button type="button" class="btn-info px-3 py-1 text-gray-600 text-xs border border-gray-300 rounded-lg hover:bg-gray-50" id="extractBtn">
+                                🌐 網址擷取
+                            </button>
+                            <button type="button" class="btn-info px-3 py-1 text-gray-600 text-xs border border-gray-300 rounded-lg hover:bg-gray-50" id="searchBtn">
+                                🔍 Tavily搜尋
+                            </button>
+                            <button type="button" class="btn-info px-3 py-1 text-gray-600 text-xs border border-gray-300 rounded-lg hover:bg-gray-50" id="pdfBtn">
+                                📄 讀取PDF
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Settings Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <!-- Speech Type -->
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-3">
+                                🎯 演講形式
+                            </label>
+                            <div class="space-y-2 mb-4">
+                                <label class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-200">
+                                    <input type="radio" class="form-radio text-blue-600" name="speechType" id="solo" value="solo" checked>
+                                    <span class="ml-3 text-gray-700">👤 單人演講</span>
+                                </label>
+                                <label class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-200">
+                                    <input type="radio" class="form-radio text-blue-600" name="speechType" id="duo" value="duo">
+                                    <span class="ml-3 text-gray-700">👥 雙人對話</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-3">
+                                🎤 語音設定
+                            </label>
+                            <div id="voice-selection">
+                                <!-- Voice dropdowns will be inserted here by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Script Purpose and Length -->
+                        <div class="mb-4">
+                            <label for="scriptStyle" class="block text-gray-700 text-sm font-bold mb-3">
+                                🎨 講稿用途
+                            </label>
+                            <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
+                                    id="scriptStyle">
+                                <option value="podcast">🎙️ Podcast 節目</option>
+                                <option value="education">📚 教育培訓</option>
+                                <option value="presentation">💼 商業簡報</option>
+                                <option value="story">📖 故事分享</option>
+                                <option value="news">📰 新聞播報</option>
+                                <option value="entertainment">🎭 娛樂節目</option>
+                                <option value="interview">💬 訪談節目</option>
+                                <option value="motivation">💪 激勵演講</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <!-- Script Length -->
+                            <label for="scriptLength" class="block text-gray-700 text-sm font-bold mb-3">
+                                ⏱️ 講稿長度 (<span id="scriptLengthValue" class="text-blue-600 font-bold">60</span>) (僅供參考)
+                            </label>
+                            <input type="range" 
+                                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider" 
+                                   id="scriptLength" 
+                                   min="10" 
+                                   max="600" 
+                                   step="10" 
+                                   value="120">
+                        </div>
+                    </div>
+                    <!-- Generate Script Button -->
+                    <div class="text-center">
+                        <button class="btn-primary px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50" id="generateBtn">
+                            <div class="loading-spinner hidden" id="generate-spinner"></div>
+                            <span class="btn-text">✨ 生成講稿</span>
+                        </button>
+                    </div>
+                
+
+                <!-- Script Editor Section -->
+                <div class="bg-white shadow-lg rounded-xl p-8 mb-6">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">
+                        📄 講稿編輯
+                    </h3>
+                    
+                    <!-- Script Output -->
+                    <div class="mb-6">
+                        <div class="flex items-center justify-between mb-3">
+                            <h5 class="text-lg font-bold text-gray-700">講稿內容</h5>
+                            <span class="text-sm text-gray-500">可直接編輯或透過上方生成</span>
+                        </div>
+                        <div id="script-output" 
+                             class="bg-gray-50 p-6 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors duration-200 min-h-32 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                             style="white-space: pre-wrap;"
+                             contenteditable="true"
+                             placeholder="請輸入或生成講稿內容..."></div>
+                        <div class="text-right text-sm text-gray-500 mt-2">
+                            講稿字數：<span id="wordCount" class="font-bold text-gray-700">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Generate Audio Button -->
+                    <div class="text-center">
+                        <button class="btn-success px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50" id="generateAudioBtn">
+                            <div class="loading-spinner hidden" id="audio-spinner"></div>
+                            <span class="btn-text">🔊 生成音檔</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Audio Output Section -->
+                <div id="audio-output-area" class="bg-white shadow-lg rounded-xl p-8 mb-6 hidden">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">
+                        🎵 語音預覽
+                    </h3>
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <audio controls id="audio-player" class="w-full mb-4 rounded-lg"></audio>
+                        <div class="text-center">
+                            <a id="download-link" 
+                               class="btn-download px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50" 
+                               href="#" 
+                               download="speech.wav">
+                                <div class="loading-spinner hidden" id="download-spinner"></div>
+                                <span class="btn-text">📥 下載音檔</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cover Image Generation Section -->
+                <div id="cover-generation-area" class="bg-white shadow-lg rounded-xl p-8 mb-6">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">
+                        🎨 封面圖片生成
+                    </h3>
+                    
+                    <!-- Prompt Input -->
+                    <div class="mb-4">
+                        <label for="coverPrompt" class="block text-gray-700 text-sm font-bold mb-2">
+                            ✍️ 圖片提示詞
+                        </label>
+                        <textarea id="coverPrompt" 
+                                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 h-24 resize-none" 
+                                  placeholder="請輸入圖片描述，或使用下方按鈕根據素材或講稿自動生成"></textarea>
+                        <div class="flex space-x-3 mt-2">
+                            <button type="button" class="btn-secondary px-3 py-1 text-gray-600 text-xs border border-gray-300 rounded-lg hover:bg-gray-50" id="autoGeneratePromptBtn">
+                                🤖 自動生成
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Image Upload -->
+                    <div class="mb-4">
+                        <label for="coverImageUpload" class="block text-gray-700 text-sm font-bold mb-2">
+                            📁 上傳參考圖片 (選填)
+                        </label>
+                        <input type="file" 
+                               id="coverImageUpload" 
+                               accept="image/*" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
+                        <p class="text-gray-500 text-xs mt-1">支援 JPG、PNG 格式，可用於圖片編輯模式</p>
+                    </div>
+
+                    <!-- Generate Button -->
+                    <div class="text-center mb-4">
+                        <button class="btn-primary px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50" id="generateCoverBtn">
+                            <div class="loading-spinner hidden" id="cover-spinner"></div>
+                            <span class="btn-text">🎨 生成封面圖片</span>
+                        </button>
+                    </div>
+
+                    <!-- Generated Image Display -->
+                    <div id="generated-image-area" class="hidden">
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                            <img id="generated-image" src="" alt="Generated Cover" class="max-w-full h-auto mx-auto rounded-lg shadow-lg">
+                            <div class="mt-4">
+                                <button class="btn-download px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50" id="downloadCoverBtn">
+                                    📥 下載封面圖片
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg text-center">
+            <div class="loading-spinner-large mb-4"></div>
+            <p class="text-gray-700 text-lg" id="loadingText">處理中，請稍候...</p>
+        </div>
+    </div>
+
+    <!-- Search Modal -->
+    <div id="searchModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">🔍 關鍵字搜尋</h3>
+            <input type="text" 
+                   id="searchKeyword" 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4" 
+                   placeholder="請輸入搜尋關鍵字...">
+            <div class="flex items-center mb-4">
+                <input type="checkbox" id="deepSearch" class="mr-2">
+                <label for="deepSearch" class="text-gray-700 text-sm">深度搜索</label>
+            </div>
+            <div class="flex space-x-3 justify-end">
+                <button type="button" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50" onclick="closeModal('searchModal')">
+                    取消
+                </button>
+                <button type="button" class="btn-primary px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50" id="confirmSearchBtn">
+                    搜尋
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Extract Modal -->
+    <div id="extractModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">🌐 網址擷取</h3>
+            <input type="url" 
+                   id="extractUrl" 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4" 
+                   placeholder="請輸入網址 (https://...)">
+            <div class="flex space-x-3 justify-end">
+                <button type="button" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50" onclick="closeModal('extractModal')">
+                    取消
+                </button>
+                <button type="button" class="btn-primary px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50" id="confirmExtractBtn">
+                    擷取
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Google Search Modal -->
+    <div id="googleModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">🔎 Google 搜尋</h3>
+            <textarea id="googleQuery" 
+                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4 h-24 resize-none" 
+                      placeholder="請輸入要搜尋的問題或關鍵字..."></textarea>
+            <div class="flex space-x-3 justify-end">
+                <button type="button" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50" onclick="closeModal('googleModal')">
+                    取消
+                </button>
+                <button type="button" class="btn-primary px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50" id="confirmGoogleBtn">
+                    搜尋
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PDF Upload Modal -->
+    <div id="pdfModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">📄 讀取 PDF 檔案</h3>
+            <input type="file" 
+                   id="pdfFileInput" 
+                   accept=".pdf" 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4">
+            <p class="text-gray-500 text-xs mb-4">支援 PDF 格式，將提取文字內容並加入素材中</p>
+            <div class="flex space-x-3 justify-end">
+                <button type="button" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50" onclick="closeModal('pdfModal')">
+                    取消
+                </button>
+                <button type="button" class="btn-primary px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50" id="confirmPdfBtn">
+                    讀取
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Alert Modal -->
+    <div id="alertModal" class="fixed inset-0 bg-black bg-opacity-50 z-[9999] hidden flex items-center justify-center">
+        <div id="alertContent" class="bg-white p-6 rounded-lg shadow-xl text-center max-w-sm mx-4 transform transition-all duration-300 scale-100">
+            <!-- Alert message will be inserted here by JS -->
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

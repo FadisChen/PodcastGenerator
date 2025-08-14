@@ -1,0 +1,182 @@
+/* 按鈕基礎樣式 */
+.btn-base {
+    @apply px-6 py-3 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none inline-flex items-center justify-center min-w-32 border-2;
+    flex-direction: row;
+}
+
+/* 主要按鈕樣式 */
+.btn-primary {
+    @apply btn-base bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg hover:shadow-xl focus:ring-blue-300 border-blue-600;
+}
+
+/* 次要按鈕樣式 */
+.btn-secondary {
+    @apply btn-base bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 shadow-md hover:shadow-lg focus:ring-gray-300 border-gray-400;
+}
+
+/* 成功按鈕樣式 */
+.btn-success {
+    @apply btn-base bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg hover:shadow-xl focus:ring-green-300;
+}
+
+/* 下載按鈕樣式 */
+.btn-download {
+    @apply btn-base bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl focus:ring-purple-300 no-underline border-purple-600;
+}
+
+/* 載入動畫 */
+.loading-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.loading-spinner.hidden {
+    width: 0;
+    height: 0;
+    margin-right: 0;
+    border: none;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 按鈕載入狀態 */
+.btn-base:disabled .btn-text {
+    opacity: 0.7;
+}
+
+/* 自定義滑桿樣式 */
+.slider::-webkit-slider-thumb {
+    @apply appearance-none w-5 h-5 bg-blue-500 rounded-full cursor-pointer shadow-lg;
+}
+
+.slider::-moz-range-thumb {
+    @apply w-5 h-5 bg-blue-500 rounded-full cursor-pointer border-0 shadow-lg;
+}
+
+/* 語音選擇下拉樣式 */
+.voice-dropdown {
+    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white;
+}
+
+.voice-label {
+    @apply block text-gray-700 text-sm font-bold mb-3;
+}
+
+/* 響應式調整 */
+@media (max-width: 768px) {
+    .btn-base {
+        @apply w-full;
+    }
+    
+    .container {
+        @apply px-4;
+    }
+}
+
+/* 演講稿輸出區域 */
+#script-output:empty:before {
+    content: "演講稿將在此顯示...";
+    color: #9CA3AF;
+    font-style: italic;
+}
+
+#script-output:focus:before {
+    content: "";
+}
+
+/* 卡片陰影動畫 */
+.shadow-lg {
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+.shadow-lg:hover {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* 輸入框聚焦效果 */
+input:focus, textarea:focus, select:focus {
+    transform: translateY(-1px);
+}
+
+/* 自定義無線電按鈕樣式 */
+input[type="radio"]:checked + span {
+    @apply text-blue-600 font-semibold;
+}
+
+/* 音頻播放器樣式 */
+audio {
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+}
+
+/* 成功/錯誤提示樣式 */
+.alert-success {
+    @apply bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg mb-4;
+}
+
+.alert-error {
+    @apply bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-4;
+}
+
+/* 進度條樣式 */
+.progress-bar {
+    @apply w-full bg-gray-200 rounded-full h-2;
+}
+
+.progress-fill {
+    @apply bg-blue-500 h-2 rounded-full transition-all duration-300;
+}
+
+/* 工具提示樣式 */
+.tooltip {
+    @apply absolute bg-gray-800 text-white text-xs px-2 py-1 rounded shadow-lg z-10 -top-8 left-1/2 transform -translate-x-1/2 opacity-0 transition-opacity duration-200;
+}
+
+.tooltip-container:hover .tooltip {
+    @apply opacity-100;
+}
+
+/* 資訊按鈕樣式 */
+.btn-info {
+    @apply btn-base bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white shadow-lg hover:shadow-xl focus:ring-cyan-300 border-cyan-600;
+}
+
+/* 大載入動畫 */
+.loading-spinner-large {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e5e5e5;
+    border-top: 4px solid #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+/* 彈出視窗動畫 */
+.modal-enter {
+    animation: modalEnter 0.3s ease-out;
+}
+
+@keyframes modalEnter {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* 黑幕覆蓋層 */
+.overlay {
+    backdrop-filter: blur(2px);
+}
