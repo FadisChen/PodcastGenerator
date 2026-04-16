@@ -229,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     async function generateScript(apiKey, material, speechType, scriptStyle, scriptLength) {
-        const model = 'gemini-2.5-flash';
+        const model = 'gemini-3-flash-preview';
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
         const purposeDescription = purposeMap[scriptStyle] || '專業內容';
@@ -315,7 +315,7 @@ ${material}`;
 
     // Token 計算函數
     async function countTokens(apiKey, text) {
-        const model = 'gemini-2.5-flash';
+        const model = 'gemini-3-flash-preview';
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:countTokens?key=${apiKey}`;
         
         const requestBody = {
@@ -445,7 +445,7 @@ ${material}`;
 
     // 生成單個片段
     async function generateSingleSegment(apiKey, segmentScript, speechType) {
-        const model = 'gemini-2.5-flash-preview-tts';
+        const model = 'gemini-3.1-flash-tts-preview';
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
         let requestBody;
@@ -566,7 +566,7 @@ ${material}`;
     }
 
     async function fetchGroundingData(apiKey, query) {
-        const model = 'gemini-2.5-flash'; 
+        const model = 'gemini-3-flash-preview'; 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
         const requestBody = {

@@ -11,18 +11,25 @@ class PodcastGenerator {
             "Zephyr(女)", "Zubenelgenubi(男)"
         ];
 
+        this.textModel = 'gemini-3-flash-preview';
+        this.ttsModel = 'gemini-3.1-flash-tts-preview';
+
         this.initializeElements();
         this.setupEventListeners();
-        this.loadApiKey();
+        this.loadSettings();
         this.updateVoiceSelectionUI();
         this.pollForElementSelection();
     }
 
     initializeElements() {
-        // API Key elements
+        // API Key / Settings elements
         this.apiKeyStatus = document.getElementById('api-key-status');
-        this.changeApiKeyBtn = document.getElementById('change-api-key');
+        this.settingsBtn = document.getElementById('settings-btn');
         this.apiStatusText = document.getElementById('api-status-text');
+        this.settingsModal = document.getElementById('settings-modal');
+        this.settingsApiKey = document.getElementById('settings-api-key');
+        this.settingsTextModel = document.getElementById('settings-text-model');
+        this.settingsTtsModel = document.getElementById('settings-tts-model');
 
         // Material elements
         this.materialInput = document.getElementById('material');
@@ -73,8 +80,8 @@ class PodcastGenerator {
     }
 
     setupEventListeners() {
-        // API Key events
-        this.changeApiKeyBtn.addEventListener('click', () => this.promptForApiKey());
+        // Settings events
+        this.settingsBtn.addEventListener('click', () => this.showSettingsModal());
 
         // Material extraction events
         this.extractElementBtn.addEventListener('click', () => this.startElementSelection());
@@ -110,6 +117,10 @@ class PodcastGenerator {
     }
 
     setupModalEvents() {
+        // Settings modal
+        document.getElementById('cancel-settings').addEventListener('click', () => this.hideModal('settings-modal'));
+        document.getElementById('save-settings').addEventListener('click', () => this.saveSettings());
+
         // Google search modal
         document.getElementById('cancel-google').addEventListener('click', () => this.hideModal('google-modal'));
         document.getElementById('confirm-google').addEventListener('click', () => this.performGoogleSearch());
@@ -133,36 +144,51 @@ class PodcastGenerator {
         });
     }
 
-    async loadApiKey() {
+    async loadSettings() {
         try {
-            const result = await chrome.storage.local.get(['geminiApiKey']);
+            const result = await chrome.storage.local.get(['geminiApiKey', 'textModel', 'ttsModel']);
             if (result.geminiApiKey) {
                 this.currentApiKey = result.geminiApiKey;
                 this.updateApiKeyStatus(true);
             } else {
                 this.updateApiKeyStatus(false);
-                // Prompt for API key if not set
-                await this.promptForApiKey();
+                this.showSettingsModal();
             }
+            if (result.textModel) this.textModel = result.textModel;
+            if (result.ttsModel) this.ttsModel = result.ttsModel;
         } catch (error) {
-            this.showAlert('error', '❌ 載入 API 金鑰失敗: ' + error.message);
+            this.showAlert('error', '❌ 載入設定失敗: ' + error.message);
             this.updateApiKeyStatus(false);
         }
     }
 
-    async promptForApiKey() {
-        const apiKey = prompt('請輸入您的 Gemini API 金鑰：');
-        if (apiKey && apiKey.trim()) {
-            try {
-                await chrome.storage.local.set({ geminiApiKey: apiKey.trim() });
-                this.currentApiKey = apiKey.trim();
-                this.updateApiKeyStatus(true);
-                this.showAlert('success', '✅ API 金鑰已設定');
-            } catch (error) {
-                this.showAlert('error', '❌ 儲存失敗: ' + error.message);
-            }
-        } else if (apiKey !== null) { // User didn't cancel but entered empty string
+    showSettingsModal() {
+        this.settingsApiKey.value = this.currentApiKey || '';
+        this.settingsTextModel.value = this.textModel;
+        this.settingsTtsModel.value = this.ttsModel;
+        this.showModal('settings-modal');
+    }
+
+    async saveSettings() {
+        const apiKey = this.settingsApiKey.value.trim();
+        const textModel = this.settingsTextModel.value.trim() || 'gemini-3-flash-preview';
+        const ttsModel = this.settingsTtsModel.value.trim() || 'gemini-3.1-flash-tts-preview';
+
+        if (!apiKey) {
             this.showAlert('error', '❌ 請輸入有效的 API 金鑰');
+            return;
+        }
+
+        try {
+            await chrome.storage.local.set({ geminiApiKey: apiKey, textModel, ttsModel });
+            this.currentApiKey = apiKey;
+            this.textModel = textModel;
+            this.ttsModel = ttsModel;
+            this.updateApiKeyStatus(true);
+            this.hideModal('settings-modal');
+            this.showAlert('success', '✅ 設定已儲存');
+        } catch (error) {
+            this.showAlert('error', '❌ 儲存失敗: ' + error.message);
         }
     }
 
@@ -364,7 +390,7 @@ class PodcastGenerator {
     }
 
     async fetchGroundingData(apiKey, query) {
-        const model = 'gemini-2.5-flash';
+        const model = this.textModel;
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
         const requestBody = {
@@ -448,7 +474,7 @@ class PodcastGenerator {
     }
 
     async callGeminiForScriptStreaming(apiKey, material, speechType, stylePrompt) {
-        const model = 'gemini-2.5-flash';
+        const model = this.textModel;
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
 
         let prompt;
@@ -705,7 +731,7 @@ ${material}`;
     }
 
     async generateSingleSegment(apiKey, segmentScript, speechType) {
-        const model = 'gemini-2.5-flash-preview-tts';
+        const model = this.ttsModel;
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
         let requestBody;
@@ -962,7 +988,7 @@ ${material}`;
             內容：
             ${content.substring(0, 1000)}...`;
 
-            const model = 'gemini-2.5-flash';
+            const model = this.textModel;
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.currentApiKey}`;
 
             const requestBody = {
@@ -1203,7 +1229,7 @@ ${material}`;
     }
 
     async callGeminiForScriptEnhancement(apiKey, currentScript, enhancementType) {
-        const model = 'gemini-2.5-flash';
+        const model = this.textModel;
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
         const speechType = document.querySelector('input[name="speechType"]:checked').value;

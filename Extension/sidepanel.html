@@ -13,7 +13,7 @@
             <div id="api-key-status">
                 <div class="status-display">
                     <span class="status-text" id="api-status-text">✅ API 金鑰已設定</span>
-                    <button id="change-api-key" class="change-key-btn">更改</button>
+                    <button id="settings-btn" class="settings-btn" title="開啟設定">⚙️</button>
                 </div>
             </div>
         </div>
@@ -206,6 +206,38 @@
                 <button id="confirm-tavily" class="btn-primary">
                     搜尋
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content settings-modal-content">
+            <h3 class="modal-title">⚙️ 設定</h3>
+            <div class="settings-field">
+                <label class="settings-label" for="settings-api-key">🔑 Gemini API 金鑰</label>
+                <input type="password"
+                       id="settings-api-key"
+                       class="input settings-input"
+                       placeholder="請輸入 Gemini API 金鑰...">
+            </div>
+            <div class="settings-field">
+                <label class="settings-label" for="settings-text-model">📝 文字生成模型</label>
+                <input type="text"
+                       id="settings-text-model"
+                       class="input settings-input"
+                       placeholder="gemini-3-flash-preview">
+            </div>
+            <div class="settings-field">
+                <label class="settings-label" for="settings-tts-model">🔊 語音合成模型</label>
+                <input type="text"
+                       id="settings-tts-model"
+                       class="input settings-input"
+                       placeholder="gemini-3.1-flash-tts-preview">
+            </div>
+            <div class="modal-buttons">
+                <button id="cancel-settings" class="btn-secondary">取消</button>
+                <button id="save-settings" class="btn-primary">儲存</button>
             </div>
         </div>
     </div>
