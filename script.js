@@ -23,16 +23,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const confirmPdfBtn = document.getElementById('confirmPdfBtn');
     const loadingOverlay = document.getElementById('loadingOverlay');
     const loadingText = document.getElementById('loadingText');
-    
-    // Cover generation elements
-    const coverGenerationArea = document.getElementById('cover-generation-area');
-    const coverPrompt = document.getElementById('coverPrompt');
-    const coverImageUpload = document.getElementById('coverImageUpload');
-    const autoGeneratePromptBtn = document.getElementById('autoGeneratePromptBtn');
-    const generateCoverBtn = document.getElementById('generateCoverBtn');
-    const generatedImageArea = document.getElementById('generated-image-area');
-    const generatedImage = document.getElementById('generated-image');
-    const downloadCoverBtn = document.getElementById('downloadCoverBtn');
 
     // Get purpose description
     const purposeMap = {
@@ -229,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     async function generateScript(apiKey, material, speechType, scriptStyle, scriptLength) {
-        const model = 'gemini-3-flash-preview';
+        const model = 'gemini-3.5-flash-lite';
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
         const purposeDescription = purposeMap[scriptStyle] || '專業內容';
@@ -293,7 +283,7 @@ ${material}`;
             "generationConfig": {
                 "temperature": 0.8,
                 "thinkingConfig": {
-                    "thinkingBudget": 0,
+                    "thinkingLevel": "minimal"
                 },
             }
         };
@@ -310,12 +300,15 @@ ${material}`;
         }
 
         const data = await response.json();
+        if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+            throw new Error('回應內容為空，可能是內容被安全過濾，請調整內容後重試');
+        }
         return data.candidates[0].content.parts[0].text;
     }
 
     // Token 計算函數
     async function countTokens(apiKey, text) {
-        const model = 'gemini-3-flash-preview';
+        const model = 'gemini-3.5-flash-lite';
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:countTokens?key=${apiKey}`;
         
         const requestBody = {
@@ -396,10 +389,10 @@ ${material}`;
         const segments = [];
         
         if (speechType === 'solo') {
-            // 單人講稿：按段落和句號分割
-            const paragraphs = script.split(/\n\s*\n/);
+            // 單人講稿：按句號分割
+            const sentences = script.split(/[。！？]/).filter(s => s.trim());
             let currentSegment = '';
-            
+
             for (const sentence of sentences) {
                 if (sentence.trim()) {
                     const fullSentence = sentence.trim() + '。';
@@ -566,7 +559,7 @@ ${material}`;
     }
 
     async function fetchGroundingData(apiKey, query) {
-        const model = 'gemini-3-flash-preview'; 
+        const model = 'gemini-3.5-flash-lite';
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
         const requestBody = {
@@ -586,7 +579,7 @@ ${material}`;
             ],
             "generationConfig": {
                 "thinkingConfig": {
-                    "thinkingBudget": 0,
+                    "thinkingLevel": "minimal"
                 },
             }
         };
@@ -603,6 +596,9 @@ ${material}`;
         }
 
         const data = await response.json();
+        if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+            throw new Error('回應內容為空，請重試');
+        }
         // Grounding 結果通常在 candidates[0].content.parts[0].text
         return data.candidates[0].content.parts[0].text;
     }
@@ -1019,248 +1015,11 @@ ${material}`;
         }
     });
 
-    // Cover generation functions
-    async function handleAutoGeneratePrompt() {
-        const apiKey = apiKeyInput.value.trim();
-        const script = scriptOutput.textContent.trim();
-        const material = materialInput.value.trim();
-        
-        if (!apiKey) {
-            showAlert('error', '❌ 請輸入您的 Gemini API 金鑰');
-            return;
-        }
-        
-        if (!script && !material) {
-            showAlert('error', '❌ 請先生成講稿或輸入素材');
-            return;
-        }
-        
-        try {
-            autoGeneratePromptBtn.disabled = true;
-            
-            const content = script || material;
-            const model = 'gemini-2.0-flash';
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-            
-            const prompt = `根據以下內容，為Podcast節目生成一個適合的封面圖片描述提示詞，要求：
-1. 必須用繁體中文撰寫提示詞
-2. 描述具體的視覺元素（麥克風、耳機、錄音室等）
-3. 風格要現代、專業、簡潔
-4. 適合作為Podcast封面
-5. 重要：不要在圖片中包含任何文字、字母或文字元素
-6. 可以包含象徵性的圖案、符號但避免文字
-7. 只回傳繁體中文提示詞，不要其他說明
-
-請在提示詞中明確加入 "no text, no letters, no words" 等指示
-
-內容：
-${content.substring(0, 1000)}`;
-
-            const requestBody = {
-                "contents": [{
-                    "parts": [{ "text": prompt }]
-                }]
-            };
-
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestBody)
-            });
-
-            if (!response.ok) {
-                throw new Error(`生成提示詞失敗: ${response.statusText}`);
-            }
-
-            const data = await response.json();
-            const generatedPrompt = data.candidates[0].content.parts[0].text.trim();
-            
-            coverPrompt.value = generatedPrompt;
-            showAlert('success', '✅ 提示詞自動生成完成！');
-            
-        } catch (error) {
-            console.error('Error generating prompt:', error);
-            showAlert('error', `❌ 生成提示詞失敗: ${error.message}`);
-        } finally {
-            autoGeneratePromptBtn.disabled = false;
-        }
-    }
-
-    async function handleGenerateCover() {
-        const apiKey = apiKeyInput.value.trim();
-        const prompt = coverPrompt.value.trim();
-        
-        if (!apiKey) {
-            showAlert('error', '❌ 請輸入您的 Gemini API 金鑰');
-            return;
-        }
-        
-        if (!prompt) {
-            showAlert('error', '❌ 請輸入圖片提示詞或點擊自動生成');
-            return;
-        }
-
-        try {
-            generateCoverBtn.disabled = true;
-            const spinner = document.getElementById('cover-spinner');
-            spinner.classList.remove('hidden');
-            
-            let imageData = null;
-            
-            // Check if user uploaded an image
-            const uploadedFile = coverImageUpload.files[0];
-            if (uploadedFile) {
-                imageData = {
-                    mimeType: uploadedFile.type,
-                    data: await fileToBase64(uploadedFile)
-                };
-            }
-            
-            const success = await generateCoverWithRetry(apiKey, prompt, imageData);
-            
-            if (!success) {
-                showAlert('error', '❌ 封面圖片生成失敗，請重試');
-            }
-            
-        } catch (error) {
-            console.error('Error generating cover:', error);
-            showAlert('error', `❌ 生成封面圖片失敗: ${error.message}`);
-        } finally {
-            generateCoverBtn.disabled = false;
-            const spinner = document.getElementById('cover-spinner');
-            spinner.classList.add('hidden');
-        }
-    }
-
-    async function generateCoverWithRetry(apiKey, prompt, imageData, maxRetries = 3) {
-        // 在提示詞中加入避免文字的指示
-        const enhancedPrompt = `${prompt}, no text, no letters, no words, no chinese characters, text-free image`;
-        
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
-            try {
-                if (attempt === 1) {
-                    showAlert('info', '🎨 正在生成封面圖片...');
-                }
-                
-                const model = 'gemini-2.0-flash-preview-image-generation';
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-                
-                let requestBody = {
-                    "contents": [{
-                        "parts": []
-                    }],
-                    "generationConfig": {
-                        "responseModalities": ["TEXT", "IMAGE"]
-                    }
-                };
-
-                // 添加增強的文字提示
-                if (enhancedPrompt) {
-                    requestBody.contents[0].parts.push({
-                        "text": enhancedPrompt
-                    });
-                }
-
-                // 如果有上傳的圖片，添加到請求中
-                if (imageData) {
-                    requestBody.contents[0].parts.push({
-                        "inline_data": {
-                            "mime_type": imageData.mimeType,
-                            "data": imageData.data
-                        }
-                    });
-                }
-                
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(requestBody)
-                });
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(`API 錯誤: ${errorData.error?.message || response.statusText}`);
-                }
-                
-                const data = await response.json();
-                
-                // 尋找圖片資料
-                if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
-                    for (const part of data.candidates[0].content.parts) {
-                        if (part.inlineData && part.inlineData.data) {
-                            // Display the generated image
-                            const mimeType = part.inlineData.mimeType || 'image/png';
-                            const imageUrl = `data:${mimeType};base64,${part.inlineData.data}`;
-                            generatedImage.src = imageUrl;
-                            generatedImageArea.classList.remove('hidden');
-                            
-                            // Setup download
-                            const blob = base64ToBlob(part.inlineData.data, mimeType);
-                            const downloadUrl = URL.createObjectURL(blob);
-                            downloadCoverBtn.onclick = () => {
-                                const a = document.createElement('a');
-                                a.href = downloadUrl;
-                                a.download = 'podcast-cover.png';
-                                a.click();
-                            };
-                            
-                            showAlert('success', '✅ 封面圖片生成成功！');
-                            return true;
-                        }
-                    }
-                }
-                
-                // 如果沒有找到圖片資料，進行靜默重試
-                if (attempt < maxRetries) {
-                    console.log(`Attempt ${attempt} failed: No image generated, retrying silently...`);
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-                    continue;
-                } else {
-                    throw new Error('圖片生成失敗，請檢查提示詞或稍後重試');
-                }
-                
-            } catch (error) {
-                if (attempt === maxRetries) {
-                    throw error;
-                }
-                console.log(`Attempt ${attempt} failed: ${error.message}, retrying silently...`);
-                await new Promise(resolve => setTimeout(resolve, 2000));
-            }
-        }
-        return false;
-    }
-
-    function fileToBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => {
-                const base64 = reader.result.split(',')[1]; // Remove data:image/...;base64, prefix
-                resolve(base64);
-            };
-            reader.onerror = error => reject(error);
-        });
-    }
-
-    function base64ToBlob(base64, mimeType) {
-        const byteCharacters = atob(base64);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        return new Blob([byteArray], { type: mimeType });
-    }
-
     // Initial setup
     speechTypeRadios.forEach(radio => radio.addEventListener('change', updateVoiceSelectionUI));
     generateBtn.addEventListener('click', handleGenerateScriptWithOverlay);
     generateAudioBtn.addEventListener('click', handleGenerateAudioWithOverlay);
-    
-    // Cover generation event listeners
-    autoGeneratePromptBtn.addEventListener('click', handleAutoGeneratePrompt);
-    generateCoverBtn.addEventListener('click', handleGenerateCover);
-    
+
     // Enhanced script length handling
     scriptLengthInput.addEventListener('input', updateScriptLengthDisplay);
 
