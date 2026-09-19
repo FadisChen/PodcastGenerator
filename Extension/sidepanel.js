@@ -11,7 +11,7 @@ class PodcastGenerator {
             "Zephyr(女)", "Zubenelgenubi(男)"
         ];
 
-        this.textModel = 'gemini-3-flash-preview';
+        this.textModel = 'gemini-3.5-flash-lite';
         this.ttsModel = 'gemini-3.1-flash-tts-preview';
 
         this.initializeElements();
@@ -171,7 +171,7 @@ class PodcastGenerator {
 
     async saveSettings() {
         const apiKey = this.settingsApiKey.value.trim();
-        const textModel = this.settingsTextModel.value.trim() || 'gemini-3-flash-preview';
+        const textModel = this.settingsTextModel.value.trim() || 'gemini-3.5-flash-lite';
         const ttsModel = this.settingsTtsModel.value.trim() || 'gemini-3.1-flash-tts-preview';
 
         if (!apiKey) {
