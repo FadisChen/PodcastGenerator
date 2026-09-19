@@ -6,7 +6,7 @@
 ---
 
 ## 二、使用模型
-- 演講稿生成：`gemini-3-flash-preview`
+- 演講稿生成：`gemini-3.5-flash-lite`
 - 語音合成：`gemini-3.1-flash-tts-preview`
 
 ---
@@ -26,7 +26,7 @@
     - Zephyr、Puck、Charon、Kore、Fenrir、Leda、Orus、Aoede、Callirrhoe、Autonoe、Enceladus、Iapetus、Umbriel、Algieba、Despina、Erinome、Algenib、Rasalgethi、Laomedeia、Achernar、Alnilam、Schedar、Gacrux、Pulcherrima、Achird、Zubenelgenubi、Vindemiatrix、Sadachbia、Sadaltager、Sulafat
 
 ### 3. 輸出演講稿
-- 使用 `gemini-3-flash-preview` 將素材轉換為演講腳本
+- 使用 `gemini-3.5-flash-lite` 將素材轉換為演講腳本
   - 單人格式：符合 TTS 單語者輸出規格
   - 雙人格式：符合對話腳本格式
   - 提示語與 prompt 可由前端組裝或後端控制
@@ -94,3 +94,4 @@
 ## 四、備註
 - 須自行處理 Gemini API 認證與金鑰管理
 - 若使用 Base64 格式回傳，需轉檔並回傳可播放音訊格式
+- Gemini 3 系列模型（如 `gemini-3.5-flash-lite`）已將 `thinkingConfig.thinkingBudget` 標記為棄用，改用 `thinkingConfig.thinkingLevel`（例如 `"minimal"`），沿用舊參數會導致 API 回傳錯誤或空白回應
