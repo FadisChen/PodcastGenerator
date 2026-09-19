@@ -64,14 +64,6 @@ class PodcastGenerator {
         this.audioPlayer = document.getElementById('audio-player');
         this.downloadAudioBtn = document.getElementById('download-audio-btn');
 
-        // Image generation elements
-        this.imagePrompt = document.getElementById('image-prompt');
-        this.autoGeneratePromptBtn = document.getElementById('auto-generate-prompt-btn');
-        this.generateImageBtn = document.getElementById('generate-image-btn');
-        this.generatedImageArea = document.getElementById('generated-image-area');
-        this.generatedImage = document.getElementById('generated-image');
-        this.downloadImageBtn = document.getElementById('download-image-btn');
-
         // Modal elements
         this.googleModal = document.getElementById('google-modal');
         this.tavilyModal = document.getElementById('tavily-modal');
@@ -107,10 +99,6 @@ class PodcastGenerator {
 
         // Audio events
         this.generateAudioBtn.addEventListener('click', () => this.generateAudio());
-
-        // Image generation events
-        this.autoGeneratePromptBtn.addEventListener('click', () => this.autoGeneratePrompt());
-        this.generateImageBtn.addEventListener('click', () => this.generateImage());
 
         // Modal events
         this.setupModalEvents();
@@ -401,7 +389,7 @@ class PodcastGenerator {
             }],
             "generationConfig": {
                     "thinkingConfig": {
-                        "thinkingBudget": 0,
+                        "thinkingLevel": "minimal"
                     },
                 },
             "tools": [{
@@ -416,10 +404,14 @@ class PodcastGenerator {
         });
 
         if (!response.ok) {
-            throw new Error('Google Search Grounding 失敗');
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.error?.message || 'Google Search Grounding 失敗');
         }
 
         const data = await response.json();
+        if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+            throw new Error('回應內容為空，請重試');
+        }
         return data.candidates[0].content.parts[0].text;
     }
 
@@ -960,208 +952,6 @@ ${material}`;
         this.alertModal.classList.add('hidden');
     }
 
-    async autoGeneratePrompt() {
-        const material = this.materialInput.value.trim();
-        const script = this.scriptContent.value.trim();
-
-        if (!this.currentApiKey) {
-            this.showAlert('error', '❌ 請先設定 API 金鑰');
-            return;
-        }
-
-        if (!material && !script) {
-            this.showAlert('error', '❌ 請先輸入素材或生成講稿');
-            return;
-        }
-
-        this.autoGeneratePromptBtn.disabled = true;
-        this.showAlert('info', '🤖 正在自動生成圖片提示詞...', true);
-
-        try {
-            const content = script || material;
-            const prompt = `根據以下內容，生成一個適合做 Podcast 封面的圖片提示詞。要求：
-            1. 描述要簡潔明確，適合圖像生成
-            2. 風格要現代、專業、吸引人
-            3. 避免包含文字元素
-            4. 用英文描述
-
-            內容：
-            ${content.substring(0, 1000)}...`;
-
-            const model = this.textModel;
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.currentApiKey}`;
-
-            const requestBody = {
-                "contents": [{
-                    "parts": [{ "text": prompt }]
-                }],
-                "generationConfig": {
-                    "temperature": 0.8,
-                    "thinkingConfig": {
-                        "thinkingBudget": 0,
-                    },
-                }
-            };
-
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestBody)
-            });
-
-            if (!response.ok) {
-                throw new Error('API 請求失敗');
-            }
-
-            const data = await response.json();
-            this.hideAlert();
-
-            if (response) {
-                this.imagePrompt.value = data.candidates[0].content.parts[0].text.trim();
-                this.showAlert('success', '✅ 圖片提示詞生成完成！');
-            }
-        } catch (error) {
-            this.hideAlert();
-            this.showAlert('error', '❌ 生成提示詞失敗: ' + error.message);
-        } finally {
-            this.autoGeneratePromptBtn.disabled = false;
-        }
-    }
-
-    async generateImage() {
-        const prompt = this.imagePrompt.value.trim();
-
-        if (!this.currentApiKey) {
-            this.showAlert('error', '❌ 請先設定 API 金鑰');
-            return;
-        }
-
-        if (!prompt) {
-            this.showAlert('error', '❌ 請輸入圖片提示詞或點擊自動生成');
-            return;
-        }
-
-        this.generateImageBtn.disabled = true;
-        document.getElementById('image-spinner').classList.remove('hidden');
-        this.showAlert('info', '🎨 正在生成封面圖片...', true);
-
-        try {
-            const success = await this.generateImageWithRetry(this.currentApiKey, prompt);
-
-            if (!success) {
-                this.showAlert('error', '❌ 封面圖片生成失敗，請重試');
-            }
-        } catch (error) {
-            this.hideAlert();
-            this.showAlert('error', '❌ 生成封面圖片失敗: ' + error.message);
-        } finally {
-            this.generateImageBtn.disabled = false;
-            document.getElementById('image-spinner').classList.add('hidden');
-        }
-    }
-
-    async generateImageWithRetry(apiKey, prompt, maxRetries = 3) {
-        // Add instructions to avoid text in the image
-        const enhancedPrompt = `${prompt}, no text, no letters, no words, no chinese characters, text-free image`;
-
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
-            try {
-                if (attempt > 1) {
-                    this.showAlert('info', `🎨 重試生成圖片 (${attempt}/${maxRetries})...`, true);
-                }
-
-                const model = 'gemini-2.0-flash-preview-image-generation';
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-
-                const requestBody = {
-                    "contents": [{
-                        "parts": [{
-                            "text": enhancedPrompt
-                        }]
-                    }],
-                    "generationConfig": {
-                        "responseModalities": ["TEXT", "IMAGE"]
-                    }
-                };
-
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(requestBody)
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(`API 錯誤: ${errorData.error?.message || response.statusText}`);
-                }
-
-                const data = await response.json();
-
-                // Look for image data
-                if (data.candidates?.[0]?.content?.parts) {
-                    for (const part of data.candidates[0].content.parts) {
-                        if (part.inlineData?.data) {
-                            // Display the generated image
-                            const mimeType = part.inlineData.mimeType || 'image/png';
-                            const imageUrl = `data:${mimeType};base64,${part.inlineData.data}`;
-                            this.generatedImage.src = imageUrl;
-                            this.generatedImageArea.classList.remove('hidden');
-
-                            // Setup download
-                            const blob = this.base64ToBlob(part.inlineData.data, mimeType);
-                            const downloadUrl = URL.createObjectURL(blob);
-                            
-                            // 生成帶日期時間的圖片檔名
-                            const now = new Date();
-                            const year = now.getFullYear();
-                            const month = String(now.getMonth() + 1).padStart(2, '0');
-                            const day = String(now.getDate()).padStart(2, '0');
-                            const hours = String(now.getHours()).padStart(2, '0');
-                            const minutes = String(now.getMinutes()).padStart(2, '0');
-                            const seconds = String(now.getSeconds()).padStart(2, '0');
-                            const imageFileName = `podcast-cover_${year}${month}${day}_${hours}${minutes}${seconds}.png`;
-                            
-                            this.downloadImageBtn.onclick = () => {
-                                const a = document.createElement('a');
-                                a.href = downloadUrl;
-                                a.download = imageFileName;
-                                a.click();
-                            };
-
-                            this.hideAlert();
-                            this.showAlert('success', '✅ 封面圖片生成成功！');
-                            return true;
-                        }
-                    }
-                }
-
-                throw new Error('未找到生成的圖片數據');
-
-            } catch (error) {
-                this.showAlert('error', `❌ 圖片生成嘗試 ${attempt} 失敗: ${error.message}`);
-
-                if (attempt === maxRetries) {
-                    throw error;
-                }
-
-                // Wait before retry
-                await new Promise(resolve => setTimeout(resolve, 2000));
-            }
-        }
-
-        return false;
-    }
-
-    base64ToBlob(base64, mimeType) {
-        const byteCharacters = atob(base64);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        return new Blob([byteArray], { type: mimeType });
-    }
-
     showScriptEnhancementButtons() {
         if (this.scriptContent.value.trim()) {
             this.scriptEnhancementSection.classList.remove('hidden');
@@ -1257,7 +1047,7 @@ ${currentScript}
             "generationConfig": {
                 "temperature": 0.8,
                 "thinkingConfig": {
-                    "thinkingBudget": 0,
+                    "thinkingLevel": "minimal"
                 },
             }
         };
@@ -1269,10 +1059,14 @@ ${currentScript}
         });
 
         if (!response.ok) {
-            throw new Error('API 請求失敗');
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.error?.message || 'API 請求失敗');
         }
 
         const data = await response.json();
+        if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+            throw new Error('回應內容為空，可能是內容被安全過濾，請調整內容後重試');
+        }
         return data.candidates[0].content.parts[0].text.trim();
     }
 

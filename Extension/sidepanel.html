@@ -132,40 +132,6 @@
             </button>
         </div>
 
-        <!-- Image Generation Section -->
-        <div class="section">
-            <div class="section-label">🎨 封面圖片生成</div>
-            
-            <!-- Prompt Input -->
-            <div class="input-group">
-                <textarea id="image-prompt" 
-                          class="textarea" 
-                          rows="3"
-                          placeholder="請輸入圖片描述，或使用下方按鈕根據素材或講稿自動生成"></textarea>
-                <div class="button-grid" style="margin-top: 8px;">
-                    <button id="auto-generate-prompt-btn" class="action-btn">
-                        🤖 自動生成
-                    </button>
-                </div>
-            </div>
-        </div>
-            <!-- Generate Button -->
-            <button id="generate-image-btn" class="main-btn image-btn">
-                <span class="loading-spinner hidden" id="image-spinner"></span>
-                <span class="btn-text">🎨 生成封面圖片</span>
-            </button>
-
-            <!-- Generated Image Display -->
-            <div id="generated-image-area" class="section hidden">
-                <div class="section-label">🖼️ 生成結果</div>
-                <div class="image-display">
-                    <img id="generated-image" src="" alt="Generated Cover" class="generated-image">
-                    <button id="download-image-btn" class="main-btn download-btn" style="margin-top: 12px;">
-                        📥 下載封面圖片
-                    </button>
-                </div>
-            </div>
-        
     </div>
 
     <!-- Modals -->
